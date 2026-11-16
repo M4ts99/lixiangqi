@@ -89,6 +89,24 @@ button:not(.point):not(:disabled):hover{background:#eaeaec}
 button.primary:not(:disabled):hover{background:#434348}
 #moves .current{background:#eeeeef}
 @media (min-width:721px){
+  :root{
+    --accent:#0f6cbd;
+    --accent-hover:#115ea3;
+    --accent-ink:#0e4775;
+    --accent-soft:#ebf3fc;
+    --accent-border:#b4d6fa;
+  }
+  header{background:#f5f9fe;border-color:#d6e5f4}
+  button.primary:not(:disabled):hover{background:var(--accent-hover)}
+  :is(button,select,input,textarea):focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  button.menu-card:not(:disabled):hover{background:var(--accent-soft);border-color:var(--accent-border)}
+  .menu-card strong{color:var(--accent-ink)}
+  #moves .current{background:var(--accent-soft);color:var(--accent-ink)}
+  .point.last{background:#9cc9f380}
+  .point.selected,.point.suggested{outline-color:var(--accent)}
+  .point.legal:after{background:#0f6cbdad}
+  .point.legal:has(.piece):after{border-color:var(--accent);background:none}
+  .course-list nav span{color:#167347}
   #play aside{position:sticky;top:16px}
   .layout{grid-template-columns:minmax(0,1fr) minmax(290px,355px)}
 }
