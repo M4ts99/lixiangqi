@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#191d19">
+  <meta name="theme-color" content="#f1f1f1">
   <title>Xiangqi</title>
   <link rel="stylesheet" href="./style.css">
   <script id="web-bootstrap">
@@ -90,7 +90,7 @@
     </section>
     <section id="settings" class="panel subpage" hidden>
       <h2>Einstellungen</h2>
-      <label>Brettdesign<select id="theme"><option value="wood">Warmes Holz</option><option value="jade">Jade</option><option value="ink">Tusche</option></select></label>
+      <label>Brettdesign<select id="theme"><option value="wood">Porzellan</option><option value="jade">Silber</option><option value="ink">Graphit</option></select></label>
       <label>Figuren<select id="pieces"><option value="han">Chinesische Zeichen</option><option value="icons">Bildfiguren</option></select></label>
       <div id="piece-preview" aria-label="Vorschau der Figuren"></div>
       <section id="profile" class="profile" aria-labelledby="profile-title" hidden>
@@ -113,7 +113,7 @@
         <div class="player"><span class="dot red"></span><strong>Rot</strong><span id="red-role"></span></div>
       </section>
       <aside>
-        <section class="panel">
+        <section class="panel" id="game-options">
           <h2>Gegen KI spielen</h2>
           <div class="options">
             <label>Spielstärke<select id="level"><option value="1">Einfach</option><option selected value="2">Mittel</option><option value="3">Stark</option></select></label>

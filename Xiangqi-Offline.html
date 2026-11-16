@@ -3,33 +3,33 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#191d19">
+  <meta name="theme-color" content="#f1f1f1">
   <title>Xiangqi</title>
-  <style>:root{color-scheme:dark;font-family:system-ui,sans-serif;color:#f4ebdc;background:#191d19;--muted:#aaa99b;--line:#42483e;--accent:#e7b970}
+  <style>:root{color-scheme:light;font-family:"Segoe UI",system-ui,sans-serif;color:#202124;background:#f1f1f1;--muted:#56585d;--line:#ceced1;--accent:#27272a}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{margin:0}
-main{max-width:1050px;margin:auto;padding:26px 22px 48px}
+main{max-width:1160px;margin:auto;padding:26px 22px 48px}
 header,.player,.replay{display:flex;align-items:center;gap:12px}
-header{margin-bottom:22px}
-h1{font-family:Georgia,serif;font-weight:500;font-size:2.5rem;margin:0}
-.mark{display:grid;place-items:center;color:#311e13;background:var(--accent);border-radius:50%;width:44px;height:44px;font-size:1.5rem}
+header{margin-bottom:22px;background:#fafafa;border:1px solid #dedee0;border-radius:8px;padding:10px 14px}
+h1{font-family:inherit;font-weight:650;font-size:1.5rem;margin:0}
+.mark{display:grid;place-items:center;color:#fff;background:var(--accent);border-radius:50%;width:34px;height:34px;font-size:1.2rem}
 .layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,330px);gap:24px;align-items:start}
 .game{min-width:0;max-width:570px;width:100%;margin:auto}
 .player{padding:10px 0;font-size:.92rem}
 .player span:last-child{color:var(--muted);margin-left:auto}
 .dot{width:10px;height:10px;border-radius:50%;background:#aaa}
-.dot.red{background:#e27661}
-.frame{border:1px solid #92623b;border-radius:14px;background:#dca975;padding:6%;box-shadow:0 12px 30px #0004}
+.dot.black{background:#303034}.dot.red{background:#fff;border:1px solid #777}
+.frame{border:1px solid #bdbdbf;border-radius:8px;background:#e6e6e7;padding:6%;box-shadow:0 3px 14px #0001}
 .board{position:relative;aspect-ratio:8/9;isolation:isolate}
-.lines{position:absolute;inset:0;width:100%;height:100%;color:#794c2d;pointer-events:none}
+.lines{position:absolute;inset:0;width:100%;height:100%;color:#5c5c61;pointer-events:none}
 .point{position:absolute;transform:translate(-50%,-50%);width:11%;aspect-ratio:1;border:0;border-radius:50%;padding:0;background:transparent;display:grid;place-items:center;cursor:pointer}
-.piece{width:92%;height:92%;display:grid;place-items:center;border:1px solid #8b5835;border-radius:50%;background:linear-gradient(145deg,#fff2ca,#e5bf84);color:#232722;box-shadow:0 2px 3px #49291299,inset 0 0 0 3px #b57e493f;font-size:clamp(16px,4.6vw,33px);font-family:serif;line-height:1}
-.piece.red{color:#9d261f}
-.point.last{background:#fff0a88c}
-.point.selected,.point.suggested{outline:3px solid #f9ed98}
-.point.legal:after{content:"";position:absolute;inset:32%;border-radius:50%;background:#365239b0}
-.point.legal:has(.piece):after{inset:0;border:3px solid #365239;background:none}
+.piece{width:92%;height:92%;display:grid;place-items:center;border:1px solid #27272a;border-radius:50%;background:linear-gradient(145deg,#444449,#27272a);color:#fff;box-shadow:0 2px 3px #0003,inset 0 0 0 3px #fff2;font-size:clamp(16px,4.6vw,33px);font-family:serif;line-height:1}
+.piece.red{background:linear-gradient(145deg,#fff,#dedee0);color:#202124;border-color:#85858b;box-shadow:0 2px 3px #0003,inset 0 0 0 3px #0001}
+.point.last{background:#9998}
+.point.selected,.point.suggested{outline:3px solid #242428;box-shadow:0 0 0 5px #fff}
+.point.legal:after{content:"";position:absolute;inset:32%;border-radius:50%;background:#343438ba}
+.point.legal:has(.piece):after{inset:0;border:3px solid #303034;background:none}
 .point.arriving .piece{visibility:hidden}
 .piece.flying{position:absolute;z-index:5;width:10.12%;height:auto;aspect-ratio:1;pointer-events:none}
 .piece svg{width:72%;height:72%;display:block;overflow:visible}
@@ -37,22 +37,22 @@ h1{font-family:Georgia,serif;font-weight:500;font-size:2.5rem;margin:0}
 #account{margin-left:auto}
 #home:not([hidden]) + #account{margin-left:0}
 body[data-welcome] :is(#home,#account,#menu,#play,#training,#settings){display:none}
-button#welcome-login{width:auto}
+button#welcome-login,.account-actions button.primary{width:auto}
 .welcome{max-width:610px;padding:clamp(20px,5vw,38px)}
-.welcome h2{font:500 clamp(1.55rem,5vw,2.3rem) Georgia,serif}
+.welcome h2{font-size:clamp(1.55rem,5vw,2.3rem);font-weight:650}
 .welcome p{line-height:1.6;margin-bottom:22px}
 .profile{margin-top:22px;padding-top:19px;border-top:1px solid var(--line)}
-.profile input,.profile textarea{display:block;width:100%;margin-top:5px;padding:9px;font:inherit;color:inherit;background:#191d19;border:1px solid var(--line);border-radius:7px}
+.profile input,.profile textarea{display:block;width:100%;margin-top:5px;padding:9px;font:inherit;color:inherit;background:#f1f1f1;border:1px solid var(--line);border-radius:7px}
 .profile textarea{resize:vertical}
-dialog{width:min(440px,92vw);background:#242a23;color:inherit;border:1px solid var(--line);border-radius:12px;padding:22px}
+dialog{width:min(440px,92vw);background:#fff;color:inherit;border:1px solid var(--line);border-radius:12px;padding:22px}
 dialog::backdrop{background:#111b}
 .dialog-close{float:right}
 #account-form label{display:block;margin:12px 0}
-#account-form input{display:block;width:100%;margin-top:5px;padding:9px;font:inherit;color:inherit;background:#191d19;border:1px solid var(--line);border-radius:7px}
+#account-form input{display:block;width:100%;margin-top:5px;padding:9px;font:inherit;color:inherit;background:#f1f1f1;border:1px solid var(--line);border-radius:7px}
 .account-actions{display:flex;gap:8px;flex-wrap:wrap}
 .menu{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
-button.menu-card{display:grid;gap:9px;text-align:left;min-height:120px;padding:20px}
-.menu-card strong{font-family:Georgia,serif;font-size:1.4rem;color:var(--accent)}
+button.menu-card{display:grid;gap:9px;text-align:left;min-height:135px;padding:22px}
+.menu-card strong{font-family:inherit;font-size:1.4rem;color:var(--accent)}
 .menu-card span,#lesson p{color:var(--muted);line-height:1.6}
 .subpage{max-width:650px}
 .subpage label{display:block;margin-bottom:16px}
@@ -66,24 +66,24 @@ button.menu-card{display:grid;gap:9px;text-align:left;min-height:120px;padding:2
 .training-layout .game{margin:0 auto}
 .training-layout .frame{padding:8%}
 #training-board .lines{overflow:visible}
-#lesson-goal{color:#f4ebdc;font-weight:650}
+#lesson-goal{color:#202124;font-weight:650}
 #lesson-result{min-height:2.8em;color:var(--accent)}
 #lesson-next{width:auto}
 #piece-preview .piece{width:40px;height:40px;font-size:25px}
-[data-theme=jade] .frame{background:#9ab69b;border-color:#577b65}
-[data-theme=jade] .lines{color:#355544}
-[data-theme=ink] .frame{background:#d0c9b9;border-color:#888174}
-[data-theme=ink] .lines{color:#4c4c49}
-.panel{padding:17px;background:#242a23;border:1px solid #373e34;border-radius:12px;margin-bottom:12px}
+[data-theme=jade] .frame{background:#cacacc;border-color:#8b8b90}
+[data-theme=jade] .lines{color:#525258}
+[data-theme=ink] .frame{background:#68686e;border-color:#4b4b50}
+[data-theme=ink] .lines{color:#dedee0}
+.panel{padding:17px;background:#fff;border:1px solid #dbdbde;border-radius:12px;margin-bottom:12px}
 h2{font-size:1.05rem;margin:0 0 14px}
 p,label{font-size:.9rem;color:var(--muted)}
 .options{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
-button:not(.point),select{font:inherit;padding:8px 10px;border-radius:7px;border:1px solid var(--line);background:#2e372d;color:inherit}
+button:not(.point),select{font:inherit;padding:8px 10px;border-radius:7px;border:1px solid var(--line);background:#fff;color:inherit}
 select{display:block;width:100%;margin-top:5px}
 button{cursor:pointer}
 button:disabled{opacity:.4;cursor:default}
-button.primary{width:100%;background:var(--accent);color:#231b12;font-weight:700;border-color:transparent}
-button:focus-visible,select:focus-visible{outline:2px solid #ffe093;outline-offset:2px}
+button.primary{width:100%;background:var(--accent);color:#fff;font-weight:700;border-color:transparent}
+button:focus-visible,select:focus-visible{outline:2px solid #52525b;outline-offset:2px}
 #moves{display:grid;grid-template-columns:1fr 1fr;gap:5px;max-height:155px;overflow:auto;margin-bottom:12px}
 #moves button,#mistakes button{text-align:left;font-size:.83rem}
 #moves .current{border-color:var(--accent)}
@@ -91,6 +91,31 @@ button:focus-visible,select:focus-visible{outline:2px solid #ffe093;outline-offs
 #mistakes{display:grid;gap:6px}
 @media(max-width:720px){main{padding:14px 12px 30px}.layout{grid-template-columns:1fr;gap:10px}header{margin-bottom:8px}.player{padding:6px 0}}
 @media(max-width:580px){.menu,.course-list{grid-template-columns:1fr}button.menu-card{min-height:85px}.training-layout .panel{grid-row:1}}
+
+button:not(.point):not(:disabled):hover{background:#eaeaec}
+button.primary:not(:disabled):hover{background:#434348}
+#moves .current{background:#eeeeef}
+@media (min-width:721px){
+  #play aside{position:sticky;top:16px}
+  .layout{grid-template-columns:minmax(0,1fr) minmax(290px,355px)}
+}
+@media (max-width:720px){
+  main{padding:0 12px 30px}
+  header{margin:0 -12px 12px;border-width:0 0 1px;border-radius:0;padding:10px 12px;gap:8px}
+  h1{font-size:1.15rem}
+  header button:not(.point){min-height:38px;font-size:.85rem;padding:6px 9px}
+  #play aside{display:contents}
+  #game-options{order:-1;margin-bottom:0;padding:12px}
+  #game-options h2{margin-bottom:8px}
+  #game-options .options{margin-bottom:8px}
+  #play .game{width:100%}
+  .welcome{padding:20px}
+  .welcome .account-actions{display:grid;grid-template-columns:1fr 1fr}
+  #welcome-login{grid-column:1 / -1}
+  #welcome .account-actions button{min-height:44px;width:100%}
+  button.menu-card{min-height:78px}
+  .training-layout .panel{grid-row:1}
+}
 </style>
   
 </head>
@@ -167,7 +192,7 @@ button:focus-visible,select:focus-visible{outline:2px solid #ffe093;outline-offs
     </section>
     <section id="settings" class="panel subpage" hidden>
       <h2>Einstellungen</h2>
-      <label>Brettdesign<select id="theme"><option value="wood">Warmes Holz</option><option value="jade">Jade</option><option value="ink">Tusche</option></select></label>
+      <label>Brettdesign<select id="theme"><option value="wood">Porzellan</option><option value="jade">Silber</option><option value="ink">Graphit</option></select></label>
       <label>Figuren<select id="pieces"><option value="han">Chinesische Zeichen</option><option value="icons">Bildfiguren</option></select></label>
       <div id="piece-preview" aria-label="Vorschau der Figuren"></div>
       <section id="profile" class="profile" aria-labelledby="profile-title" hidden>
@@ -190,7 +215,7 @@ button:focus-visible,select:focus-visible{outline:2px solid #ffe093;outline-offs
         <div class="player"><span class="dot red"></span><strong>Rot</strong><span id="red-role"></span></div>
       </section>
       <aside>
-        <section class="panel">
+        <section class="panel" id="game-options">
           <h2>Gegen KI spielen</h2>
           <div class="options">
             <label>Spielstärke<select id="level"><option value="1">Einfach</option><option selected value="2">Mittel</option><option value="3">Stark</option></select></label>
