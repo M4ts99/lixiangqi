@@ -8,6 +8,8 @@ const $ = id => document.getElementById(id);
 const status = message => { $('account-status').textContent = message; };
 
 let client, user, link, timer, loading;
+let guest = false;
+let profileUser;
 let currentOperation = Promise.resolve();
 
 function snapshot() {
@@ -36,9 +38,23 @@ function restore(save) {
 function updateAccount() {
   $('account-form').hidden = Boolean(user);
   $('account-sync').hidden = !user;
-  $('account-user').textContent = user?.email ?? '';
+  const metadata = user?.user_metadata;
+  const name = typeof metadata?.display_name === 'string' ? metadata.display_name : '';
+  $('account-user').textContent = name || user?.email || '';
   $('account').textContent = link ? 'Konto ✓' : 'Konto';
   $('sync-start').hidden = Boolean(link);
+  $('profile-form').hidden = !user;
+  $('profile-guest').hidden = $('profile-login').hidden = Boolean(user);
+  $('profile-email').textContent = user?.email ?? '';
+  if (profileUser !== user?.id) {
+    profileUser = user?.id;
+    $('profile-name').value = name;
+    $('profile-bio').value = typeof metadata?.bio === 'string' ? metadata.bio : '';
+    $('profile-status').textContent = '';
+  }
+  const welcome = !guest && !user;
+  document.body.toggleAttribute('data-welcome', welcome);
+  $('welcome').hidden = !welcome;
 }
 
 function bind(revision) {
@@ -129,7 +145,10 @@ function connect() {
         const stored = JSON.parse(localStorage.getItem(linkKey));
         link = user && stored?.user === user.id ? stored : undefined;
       } catch { link = undefined; }
-      if (event === 'SIGNED_OUT') unbind();
+      if (event === 'SIGNED_OUT') {
+        guest = false;
+        unbind();
+      }
       updateAccount();
       if (link) schedule();
       if (event === 'INITIAL_SESSION') status(user ? 'Angemeldet.' : '');
@@ -141,15 +160,31 @@ function connect() {
   return loading;
 }
 
-$('account').hidden = false;
-$('account').onclick = () => {
-  $('account-dialog').showModal();
+function openAccount(mode = 'login') {
+  const dialog = $('account-dialog');
+  if (!dialog.open) dialog.showModal();
+  $('account-title').textContent = user ? 'Konto und Spielstand'
+    : mode === 'signup' ? 'Konto erstellen' : 'Anmelden';
+  for (const button of $('account-form').querySelectorAll('button[type="submit"]')) {
+    button.classList.toggle('primary', button.value === mode);
+  }
+  $('account-password').autocomplete = mode === 'signup' ? 'new-password' : 'current-password';
   run(async () => {
     if (client) return;
     status('Konto wird geladen …');
     await connect();
   });
+}
+
+$('account').hidden = $('profile').hidden = false;
+$('account').onclick = $('profile-login').onclick = $('welcome-login').onclick = () => openAccount();
+$('welcome-signup').onclick = () => openAccount('signup');
+$('welcome-guest').onclick = () => {
+  guest = true;
+  updateAccount();
+  $('menu').querySelector('button')?.focus();
 };
+updateAccount();
 
 $('account-form').onsubmit = event => {
   event.preventDefault();
@@ -167,7 +202,34 @@ $('account-form').onsubmit = event => {
       throw error;
     }
     status(signup && !data.session ? 'Öffne den Bestätigungslink in deiner E-Mail.' : 'Angemeldet.');
+    if (data.session && $('account-dialog').open) $('account-dialog').close();
   });
+};
+
+$('profile-form').onsubmit = async event => {
+  event.preventDefault();
+  if (!user || !client) return;
+  const accountId = user.id;
+  const form = event.currentTarget;
+  const submit = form.querySelector('button[type="submit"]');
+  const display_name = $('profile-name').value.trim();
+  const bio = $('profile-bio').value.trim();
+  submit.disabled = true;
+  $('profile-status').textContent = 'Profil wird gespeichert …';
+  try {
+    const { data, error } = await client.auth.updateUser({ data: { display_name, bio } });
+    if (error) throw error;
+    if (user?.id !== accountId) return;
+    user = data.user;
+    updateAccount();
+    if ($('profile-name').value.trim() === display_name) $('profile-name').value = display_name;
+    if ($('profile-bio').value.trim() === bio) $('profile-bio').value = bio;
+    $('profile-status').textContent = 'Profil gespeichert.';
+  } catch {
+    if (user?.id === accountId) $('profile-status').textContent = 'Das Profil konnte gerade nicht gespeichert werden.';
+  } finally {
+    submit.disabled = false;
+  }
 };
 
 $('sync-start').onclick = () => run(async () => {
@@ -209,7 +271,7 @@ $('sync-logout').onclick = () => run(async () => {
 window.addEventListener('xiangqi-save', schedule);
 window.addEventListener('online', schedule);
 try {
-  if (localStorage.getItem(linkKey) || location.hash.includes('access_token=')) {
+  if (localStorage.getItem('sb-uqynozssqshyfhqfyjpg-auth-token') || location.hash.includes('access_token=')) {
     connect().catch(() => status('Cloud-Speicherung derzeit nicht erreichbar.'));
   }
 } catch {}

@@ -41,6 +41,15 @@
       </div>
       <p id="account-status" role="status"></p>
     </dialog>
+    <section id="welcome" class="panel welcome" aria-labelledby="welcome-title" hidden>
+      <h2 id="welcome-title">Willkommen bei Xiangqi</h2>
+      <p>Spiele gegen die KI oder lerne die Regeln direkt am Brett. Mit einem Konto kannst du deinen Fortschritt auf mehreren Geräten nutzen.</p>
+      <div class="account-actions">
+        <button id="welcome-login" class="primary">Anmelden</button>
+        <button id="welcome-signup">Konto erstellen</button>
+        <button id="welcome-guest">Als Gast spielen</button>
+      </div>
+    </section>
     <nav id="menu" class="menu" aria-label="Hauptmenü">
       <button class="menu-card" data-page="play"><strong>Spielen</strong><span>Eine Partie gegen die KI spielen oder fortsetzen</span></button>
       <button class="menu-card" data-page="training"><strong>Training</strong><span>Figuren und Spielregeln kennenlernen</span></button>
@@ -73,6 +82,18 @@
       <label>Brettdesign<select id="theme"><option value="wood">Warmes Holz</option><option value="jade">Jade</option><option value="ink">Tusche</option></select></label>
       <label>Figuren<select id="pieces"><option value="han">Chinesische Zeichen</option><option value="icons">Bildfiguren</option></select></label>
       <div id="piece-preview" aria-label="Vorschau der Figuren"></div>
+      <section id="profile" class="profile" aria-labelledby="profile-title" hidden>
+        <h2 id="profile-title">Profil</h2>
+        <p id="profile-guest">Melde dich an, um dein Profil zu bearbeiten.</p>
+        <button id="profile-login">Anmelden</button>
+        <form id="profile-form" hidden>
+          <p id="profile-email"></p>
+          <label>Anzeigename<input id="profile-name" maxlength="40" autocomplete="nickname"></label>
+          <label>Kurzbeschreibung<textarea id="profile-bio" maxlength="160" rows="3"></textarea></label>
+          <button type="submit">Profil speichern</button>
+          <p id="profile-status" role="status"></p>
+        </form>
+      </section>
     </section>
     <div class="layout" id="play" hidden>
       <section class="game" aria-label="Spielbrett">

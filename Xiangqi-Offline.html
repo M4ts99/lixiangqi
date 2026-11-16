@@ -36,6 +36,14 @@ h1{font-family:Georgia,serif;font-weight:500;font-size:2.5rem;margin:0}
 #home{margin-left:auto}
 #account{margin-left:auto}
 #home:not([hidden]) + #account{margin-left:0}
+body[data-welcome] :is(#home,#account,#menu,#play,#training,#settings){display:none}
+button#welcome-login{width:auto}
+.welcome{max-width:610px;padding:clamp(20px,5vw,38px)}
+.welcome h2{font:500 clamp(1.55rem,5vw,2.3rem) Georgia,serif}
+.welcome p{line-height:1.6;margin-bottom:22px}
+.profile{margin-top:22px;padding-top:19px;border-top:1px solid var(--line)}
+.profile input,.profile textarea{display:block;width:100%;margin-top:5px;padding:9px;font:inherit;color:inherit;background:#191d19;border:1px solid var(--line);border-radius:7px}
+.profile textarea{resize:vertical}
 dialog{width:min(440px,92vw);background:#242a23;color:inherit;border:1px solid var(--line);border-radius:12px;padding:22px}
 dialog::backdrop{background:#111b}
 .dialog-close{float:right}
@@ -110,6 +118,15 @@ button:focus-visible,select:focus-visible{outline:2px solid #ffe093;outline-offs
       </div>
       <p id="account-status" role="status"></p>
     </dialog>
+    <section id="welcome" class="panel welcome" aria-labelledby="welcome-title" hidden>
+      <h2 id="welcome-title">Willkommen bei Xiangqi</h2>
+      <p>Spiele gegen die KI oder lerne die Regeln direkt am Brett. Mit einem Konto kannst du deinen Fortschritt auf mehreren Geräten nutzen.</p>
+      <div class="account-actions">
+        <button id="welcome-login" class="primary">Anmelden</button>
+        <button id="welcome-signup">Konto erstellen</button>
+        <button id="welcome-guest">Als Gast spielen</button>
+      </div>
+    </section>
     <nav id="menu" class="menu" aria-label="Hauptmenü">
       <button class="menu-card" data-page="play"><strong>Spielen</strong><span>Eine Partie gegen die KI spielen oder fortsetzen</span></button>
       <button class="menu-card" data-page="training"><strong>Training</strong><span>Figuren und Spielregeln kennenlernen</span></button>
@@ -142,6 +159,18 @@ button:focus-visible,select:focus-visible{outline:2px solid #ffe093;outline-offs
       <label>Brettdesign<select id="theme"><option value="wood">Warmes Holz</option><option value="jade">Jade</option><option value="ink">Tusche</option></select></label>
       <label>Figuren<select id="pieces"><option value="han">Chinesische Zeichen</option><option value="icons">Bildfiguren</option></select></label>
       <div id="piece-preview" aria-label="Vorschau der Figuren"></div>
+      <section id="profile" class="profile" aria-labelledby="profile-title" hidden>
+        <h2 id="profile-title">Profil</h2>
+        <p id="profile-guest">Melde dich an, um dein Profil zu bearbeiten.</p>
+        <button id="profile-login">Anmelden</button>
+        <form id="profile-form" hidden>
+          <p id="profile-email"></p>
+          <label>Anzeigename<input id="profile-name" maxlength="40" autocomplete="nickname"></label>
+          <label>Kurzbeschreibung<textarea id="profile-bio" maxlength="160" rows="3"></textarea></label>
+          <button type="submit">Profil speichern</button>
+          <p id="profile-status" role="status"></p>
+        </form>
+      </section>
     </section>
     <div class="layout" id="play" hidden>
       <section class="game" aria-label="Spielbrett">
