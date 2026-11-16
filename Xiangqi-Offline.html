@@ -102,10 +102,12 @@ button:focus-visible,select:focus-visible{outline:2px solid #ffe093;outline-offs
       <h2 id="account-title">Konto und Spielstand</h2>
       <form id="account-form">
         <label>E-Mail<input id="account-email" type="email" autocomplete="email" required></label>
+        <label id="confirm-email-field" hidden>E-Mail wiederholen<input id="confirm-email" type="email" autocomplete="off" disabled></label>
         <label>Passwort<input id="account-password" type="password" autocomplete="current-password" required></label>
+        <label id="confirm-password-field" hidden>Passwort wiederholen<input id="confirm-password" type="password" autocomplete="new-password" disabled></label>
         <div class="account-actions">
-          <button type="submit" value="login">Anmelden</button>
-          <button type="submit" value="signup">Konto erstellen</button>
+          <button class="primary" id="account-submit" type="submit">Anmelden</button>
+          <button id="account-switch" type="button">Konto erstellen</button>
         </div>
       </form>
       <div id="account-sync" hidden>

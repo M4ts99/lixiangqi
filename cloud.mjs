@@ -10,6 +10,7 @@ const status = message => { $('account-status').textContent = message; };
 let client, user, link, timer, loading;
 let guest = false;
 let profileUser;
+let accountMode = 'login';
 let currentOperation = Promise.resolve();
 
 function snapshot() {
@@ -160,15 +161,30 @@ function connect() {
   return loading;
 }
 
+function setAccountMode(mode) {
+  accountMode = mode;
+  const signup = mode === 'signup';
+  $('account-title').textContent = user ? 'Konto und Spielstand'
+    : signup ? 'Konto erstellen' : 'Anmelden';
+  $('account-submit').textContent = signup ? 'Konto erstellen' : 'Anmelden';
+  $('account-switch').textContent = signup ? 'Zur Anmeldung' : 'Konto erstellen';
+  for (const id of ['confirm-email', 'confirm-password']) {
+    $(id+'-field').hidden = !signup;
+    $(id).disabled = !signup;
+    $(id).required = signup;
+    $(id).value = '';
+  }
+  $('account-password').value = '';
+  $('account-password').autocomplete = signup ? 'new-password' : 'current-password';
+  if (signup) $('account-password').minLength = 6;
+  else $('account-password').removeAttribute('minlength');
+  status('');
+}
+
 function openAccount(mode = 'login') {
   const dialog = $('account-dialog');
+  setAccountMode(mode);
   if (!dialog.open) dialog.showModal();
-  $('account-title').textContent = user ? 'Konto und Spielstand'
-    : mode === 'signup' ? 'Konto erstellen' : 'Anmelden';
-  for (const button of $('account-form').querySelectorAll('button[type="submit"]')) {
-    button.classList.toggle('primary', button.value === mode);
-  }
-  $('account-password').autocomplete = mode === 'signup' ? 'new-password' : 'current-password';
   run(async () => {
     if (client) return;
     status('Konto wird geladen …');
@@ -179,6 +195,7 @@ function openAccount(mode = 'login') {
 $('account').hidden = $('profile').hidden = false;
 $('account').onclick = $('profile-login').onclick = $('welcome-login').onclick = () => openAccount();
 $('welcome-signup').onclick = () => openAccount('signup');
+$('account-switch').onclick = () => setAccountMode(accountMode === 'signup' ? 'login' : 'signup');
 $('welcome-guest').onclick = () => {
   guest = true;
   updateAccount();
@@ -188,10 +205,21 @@ updateAccount();
 
 $('account-form').onsubmit = event => {
   event.preventDefault();
-  const signup = event.submitter?.value === 'signup';
+  const signup = accountMode === 'signup';
   const email = $('account-email').value.trim();
   const password = $('account-password').value;
+  if (signup && email.toLowerCase() !== $('confirm-email').value.trim().toLowerCase()) {
+    status('Die beiden E-Mail-Adressen stimmen nicht überein.');
+    $('confirm-email').focus();
+    return;
+  }
+  if (signup && password !== $('confirm-password').value) {
+    status('Die beiden Passwörter stimmen nicht überein.');
+    $('confirm-password').focus();
+    return;
+  }
   $('account-password').value = '';
+  $('confirm-password').value = '';
   run(async () => {
     if (!client) throw new Error('Die Kontoanbindung ist gerade nicht erreichbar.');
     const { data, error } = signup
@@ -201,7 +229,9 @@ $('account-form').onsubmit = event => {
       if (!signup) throw new Error('Anmeldung fehlgeschlagen. Prüfe E-Mail, Passwort und E-Mail-Bestätigung.');
       throw error;
     }
-    status(signup && !data.session ? 'Öffne den Bestätigungslink in deiner E-Mail.' : 'Angemeldet.');
+    status(signup && !data.session
+      ? 'Öffne den Bestätigungslink in deiner E-Mail. Kehre danach hierher zurück und melde dich an.'
+      : 'Angemeldet.');
     if (data.session && $('account-dialog').open) $('account-dialog').close();
   });
 };
