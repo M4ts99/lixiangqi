@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#191d19">
+  <title>Xiangqi</title>
+  <link rel="stylesheet" href="./style.css">
+  <script id="web-bootstrap">
+    if (location.protocol === 'file:') {
+      location.replace(new URL('./Xiangqi-Offline.html', location.href).href);
+    } else {
+      const manifest = document.createElement('link');
+      manifest.rel = 'manifest';
+      manifest.href = './manifest.webmanifest';
+      document.head.append(manifest);
+    }
+  </script>
+</head>
+<body>
+  <main>
+    <header><span class="mark" aria-hidden="true">象</span><h1>Xiangqi</h1><button id="home" hidden>Hauptmenü</button></header>
+    <nav id="menu" class="menu" aria-label="Hauptmenü">
+      <button class="menu-card" data-page="play"><strong>Spielen</strong><span>Eine Partie gegen die KI spielen oder fortsetzen</span></button>
+      <button class="menu-card" data-page="training"><strong>Training</strong><span>Figuren und Spielregeln kennenlernen</span></button>
+      <button class="menu-card" data-page="settings"><strong>Einstellungen</strong><span>Brett und Figuren anpassen</span></button>
+    </nav>
+    <section id="training" hidden>
+      <div id="course-list" class="course-list"></div>
+      <section id="exercise" hidden>
+        <button id="training-back">Alle Lektionen</button>
+        <div class="layout training-layout">
+          <div class="game">
+            <div class="frame"><div id="training-board" class="board" aria-label="Übungsbrett"></div></div>
+          </div>
+          <article class="panel">
+            <p id="lesson-position"></p>
+            <h2 id="lesson-title" tabindex="-1"></h2>
+            <p id="lesson-copy"></p>
+            <p id="lesson-goal"></p>
+            <p id="lesson-result" role="status"></p>
+            <div class="replay">
+              <button id="lesson-reset">Neu versuchen</button>
+              <button id="lesson-next" class="primary" hidden>Weiter</button>
+            </div>
+          </article>
+        </div>
+      </section>
+    </section>
+    <section id="settings" class="panel subpage" hidden>
+      <h2>Einstellungen</h2>
+      <label>Brettdesign<select id="theme"><option value="wood">Warmes Holz</option><option value="jade">Jade</option><option value="ink">Tusche</option></select></label>
+      <label>Figuren<select id="pieces"><option value="han">Chinesische Zeichen</option><option value="icons">Bildfiguren</option></select></label>
+      <div id="piece-preview" aria-label="Vorschau der Figuren"></div>
+    </section>
+    <div class="layout" id="play" hidden>
+      <section class="game" aria-label="Spielbrett">
+        <div class="player"><span class="dot black"></span><strong>Schwarz</strong><span id="black-role"></span></div>
+        <div class="frame"><div id="board" class="board" aria-label="Xiangqi-Brett"></div></div>
+        <div class="player"><span class="dot red"></span><strong>Rot</strong><span id="red-role"></span></div>
+      </section>
+      <aside>
+        <section class="panel">
+          <h2>Gegen KI spielen</h2>
+          <div class="options">
+            <label>Spielstärke<select id="level"><option value="1">Einfach</option><option selected value="2">Mittel</option><option value="3">Stark</option></select></label>
+            <label>Deine Seite<select id="team"><option value="1">Rot</option><option value="-1">Schwarz</option></select></label>
+          </div>
+          <button class="primary" id="start">Neue Partie</button>
+        </section>
+        <section class="panel">
+          <h2>Partieverlauf</h2>
+          <p id="status" role="status"></p>
+          <div id="moves" aria-label="Zugliste"></div>
+          <div class="replay">
+            <button id="prev" aria-label="Vorheriger Zug">←</button>
+            <button id="next" aria-label="Nächster Zug">→</button>
+            <button id="live">Letzter Zug</button>
+          </div>
+          <button id="resign">Aufgeben</button>
+        </section>
+        <section class="panel" id="analysis-panel" hidden>
+          <h2>Partieanalyse</h2>
+          <p id="analysis-status" role="status"></p>
+          <div id="mistakes"></div>
+        </section>
+      </aside>
+    </div>
+  </main>
+  <script id="web-app">
+    if (location.protocol !== 'file:') import('./app.mjs');
+  </script>
+</body>
+</html>

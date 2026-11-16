@@ -1,0 +1,783 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#191d19">
+  <title>Xiangqi</title>
+  <style>:root{color-scheme:dark;font-family:system-ui,sans-serif;color:#f4ebdc;background:#191d19;--muted:#aaa99b;--line:#42483e;--accent:#e7b970}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0}
+main{max-width:1050px;margin:auto;padding:26px 22px 48px}
+header,.player,.replay{display:flex;align-items:center;gap:12px}
+header{margin-bottom:22px}
+h1{font-family:Georgia,serif;font-weight:500;font-size:2.5rem;margin:0}
+.mark{display:grid;place-items:center;color:#311e13;background:var(--accent);border-radius:50%;width:44px;height:44px;font-size:1.5rem}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,330px);gap:24px;align-items:start}
+.game{min-width:0;max-width:570px;width:100%;margin:auto}
+.player{padding:10px 0;font-size:.92rem}
+.player span:last-child{color:var(--muted);margin-left:auto}
+.dot{width:10px;height:10px;border-radius:50%;background:#aaa}
+.dot.red{background:#e27661}
+.frame{border:1px solid #92623b;border-radius:14px;background:#dca975;padding:6%;box-shadow:0 12px 30px #0004}
+.board{position:relative;aspect-ratio:8/9;isolation:isolate}
+.lines{position:absolute;inset:0;width:100%;height:100%;color:#794c2d;pointer-events:none}
+.point{position:absolute;transform:translate(-50%,-50%);width:11%;aspect-ratio:1;border:0;border-radius:50%;padding:0;background:transparent;display:grid;place-items:center;cursor:pointer}
+.piece{width:92%;height:92%;display:grid;place-items:center;border:1px solid #8b5835;border-radius:50%;background:linear-gradient(145deg,#fff2ca,#e5bf84);color:#232722;box-shadow:0 2px 3px #49291299,inset 0 0 0 3px #b57e493f;font-size:clamp(16px,4.6vw,33px);font-family:serif;line-height:1}
+.piece.red{color:#9d261f}
+.point.last{background:#fff0a88c}
+.point.selected,.point.suggested{outline:3px solid #f9ed98}
+.point.legal:after{content:"";position:absolute;inset:32%;border-radius:50%;background:#365239b0}
+.point.legal:has(.piece):after{inset:0;border:3px solid #365239;background:none}
+.point.arriving .piece{visibility:hidden}
+.piece.flying{position:absolute;z-index:5;width:10.12%;height:auto;aspect-ratio:1;pointer-events:none}
+.piece svg{width:72%;height:72%;display:block;overflow:visible}
+#home{margin-left:auto}
+.menu{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+button.menu-card{display:grid;gap:9px;text-align:left;min-height:120px;padding:20px}
+.menu-card strong{font-family:Georgia,serif;font-size:1.4rem;color:var(--accent)}
+.menu-card span,#lesson p{color:var(--muted);line-height:1.6}
+.subpage{max-width:650px}
+.subpage label{display:block;margin-bottom:16px}
+#piece-preview{display:flex;gap:8px;flex-wrap:wrap}
+.course-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.course-list .panel{margin:0}
+.course-list nav{display:grid;gap:6px}
+.course-list nav button{display:flex;justify-content:space-between;gap:8px;text-align:left}
+.course-list nav span{color:var(--accent)}
+.training-layout{margin-top:16px}
+.training-layout .game{margin:0 auto}
+.training-layout .frame{padding:8%}
+#training-board .lines{overflow:visible}
+#lesson-goal{color:#f4ebdc;font-weight:650}
+#lesson-result{min-height:2.8em;color:var(--accent)}
+#lesson-next{width:auto}
+#piece-preview .piece{width:40px;height:40px;font-size:25px}
+[data-theme=jade] .frame{background:#9ab69b;border-color:#577b65}
+[data-theme=jade] .lines{color:#355544}
+[data-theme=ink] .frame{background:#d0c9b9;border-color:#888174}
+[data-theme=ink] .lines{color:#4c4c49}
+.panel{padding:17px;background:#242a23;border:1px solid #373e34;border-radius:12px;margin-bottom:12px}
+h2{font-size:1.05rem;margin:0 0 14px}
+p,label{font-size:.9rem;color:var(--muted)}
+.options{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+button:not(.point),select{font:inherit;padding:8px 10px;border-radius:7px;border:1px solid var(--line);background:#2e372d;color:inherit}
+select{display:block;width:100%;margin-top:5px}
+button{cursor:pointer}
+button:disabled{opacity:.4;cursor:default}
+button.primary{width:100%;background:var(--accent);color:#231b12;font-weight:700;border-color:transparent}
+button:focus-visible,select:focus-visible{outline:2px solid #ffe093;outline-offset:2px}
+#moves{display:grid;grid-template-columns:1fr 1fr;gap:5px;max-height:155px;overflow:auto;margin-bottom:12px}
+#moves button,#mistakes button{text-align:left;font-size:.83rem}
+#moves .current{border-color:var(--accent)}
+#resign{margin-top:12px}
+#mistakes{display:grid;gap:6px}
+@media(max-width:720px){main{padding:14px 12px 30px}.layout{grid-template-columns:1fr;gap:10px}header{margin-bottom:8px}.player{padding:6px 0}}
+@media(max-width:580px){.menu,.course-list{grid-template-columns:1fr}button.menu-card{min-height:85px}.training-layout .panel{grid-row:1}}
+</style>
+  
+</head>
+<body>
+  <main>
+    <header><span class="mark" aria-hidden="true">象</span><h1>Xiangqi</h1><button id="home" hidden>Hauptmenü</button></header>
+    <nav id="menu" class="menu" aria-label="Hauptmenü">
+      <button class="menu-card" data-page="play"><strong>Spielen</strong><span>Eine Partie gegen die KI spielen oder fortsetzen</span></button>
+      <button class="menu-card" data-page="training"><strong>Training</strong><span>Figuren und Spielregeln kennenlernen</span></button>
+      <button class="menu-card" data-page="settings"><strong>Einstellungen</strong><span>Brett und Figuren anpassen</span></button>
+    </nav>
+    <section id="training" hidden>
+      <div id="course-list" class="course-list"></div>
+      <section id="exercise" hidden>
+        <button id="training-back">Alle Lektionen</button>
+        <div class="layout training-layout">
+          <div class="game">
+            <div class="frame"><div id="training-board" class="board" aria-label="Übungsbrett"></div></div>
+          </div>
+          <article class="panel">
+            <p id="lesson-position"></p>
+            <h2 id="lesson-title" tabindex="-1"></h2>
+            <p id="lesson-copy"></p>
+            <p id="lesson-goal"></p>
+            <p id="lesson-result" role="status"></p>
+            <div class="replay">
+              <button id="lesson-reset">Neu versuchen</button>
+              <button id="lesson-next" class="primary" hidden>Weiter</button>
+            </div>
+          </article>
+        </div>
+      </section>
+    </section>
+    <section id="settings" class="panel subpage" hidden>
+      <h2>Einstellungen</h2>
+      <label>Brettdesign<select id="theme"><option value="wood">Warmes Holz</option><option value="jade">Jade</option><option value="ink">Tusche</option></select></label>
+      <label>Figuren<select id="pieces"><option value="han">Chinesische Zeichen</option><option value="icons">Bildfiguren</option></select></label>
+      <div id="piece-preview" aria-label="Vorschau der Figuren"></div>
+    </section>
+    <div class="layout" id="play" hidden>
+      <section class="game" aria-label="Spielbrett">
+        <div class="player"><span class="dot black"></span><strong>Schwarz</strong><span id="black-role"></span></div>
+        <div class="frame"><div id="board" class="board" aria-label="Xiangqi-Brett"></div></div>
+        <div class="player"><span class="dot red"></span><strong>Rot</strong><span id="red-role"></span></div>
+      </section>
+      <aside>
+        <section class="panel">
+          <h2>Gegen KI spielen</h2>
+          <div class="options">
+            <label>Spielstärke<select id="level"><option value="1">Einfach</option><option selected value="2">Mittel</option><option value="3">Stark</option></select></label>
+            <label>Deine Seite<select id="team"><option value="1">Rot</option><option value="-1">Schwarz</option></select></label>
+          </div>
+          <button class="primary" id="start">Neue Partie</button>
+        </section>
+        <section class="panel">
+          <h2>Partieverlauf</h2>
+          <p id="status" role="status"></p>
+          <div id="moves" aria-label="Zugliste"></div>
+          <div class="replay">
+            <button id="prev" aria-label="Vorheriger Zug">←</button>
+            <button id="next" aria-label="Nächster Zug">→</button>
+            <button id="live">Letzter Zug</button>
+          </div>
+          <button id="resign">Aufgeben</button>
+        </section>
+        <section class="panel" id="analysis-panel" hidden>
+          <h2>Partieanalyse</h2>
+          <p id="analysis-status" role="status"></p>
+          <div id="mistakes"></div>
+        </section>
+      </aside>
+    </div>
+  </main>
+  <script>const workerCode = "const initial = () => [\n  'rheakaehr', '.........', '.c.....c.', 'p.p.p.p.p', '.........',\n  '.........', 'P.P.P.P.P', '.C.....C.', '.........', 'RHEAKAEHR',\n].join('').split('');\nconst side = piece => piece === '.' ? 0 : piece === piece.toUpperCase() ? 1 : -1;\n\nfunction reaches(board, from, to) {\n  const team = side(board[from]);\n  const x = from % 9, y = Math.floor(from / 9);\n  const u = to % 9, v = Math.floor(to / 9);\n  const dx = u - x, dy = v - y, a = Math.abs(dx), b = Math.abs(dy);\n  if (!team || from === to || side(board[to]) === team) return false;\n  const crossed = team === 1 ? y <= 4 : y >= 5;\n  const palace = u >= 3 && u <= 5 && (team === 1 ? v >= 7 : v <= 2);\n  switch (board[from].toLowerCase()) {\n    case 'p': return (dx === 0 && dy === -team) || (crossed && a === 1 && dy === 0);\n    case 'a': return palace && a === 1 && b === 1;\n    case 'e': return a === 2 && b === 2 && (team === 1 ? v >= 5 : v <= 4)\n      && board[from + dx / 2 + 9 * dy / 2] === '.';\n    case 'h':\n      return ((a === 2 && b === 1) || (a === 1 && b === 2))\n        && board[from + (a === 2 ? Math.sign(dx) : 9 * Math.sign(dy))] === '.';\n    case 'k':\n      if (palace && a + b === 1) return true;\n      if (dx || board[to].toLowerCase() !== 'k') return false;\n      break;\n    default:\n      if (dx && dy) return false;\n  }\n  const step = Math.sign(dx) + 9 * Math.sign(dy);\n  let blockers = 0;\n  for (let index = from + step; index !== to; index += step) {\n    if (board[index] !== '.') blockers++;\n  }\n  return blockers === (board[from].toLowerCase() === 'c' && board[to] !== '.' ? 1 : 0);\n}\n\nfunction play(board, [from, to]) {\n  const next = board.slice();\n  next[to] = next[from];\n  next[from] = '.';\n  return next;\n}\n\nfunction check(board, team) {\n  const king = board.indexOf(team === 1 ? 'K' : 'k');\n  return king < 0 || board.some((piece, from) => side(piece) === -team && reaches(board, from, king));\n}\n\nfunction moves(board, team, selected) {\n  const result = [];\n  const start = selected ?? 0, end = selected === undefined ? 90 : selected + 1;\n  for (let from = start; from < end; from++) {\n    if (side(board[from]) !== team) continue;\n    for (let to = 0; to < 90; to++) {\n      if (reaches(board, from, to) && !check(play(board, [from, to]), team)) result.push([from, to]);\n    }\n  }\n  return result;\n}\n\nfunction outcome(history, board, team) {\n  if (!moves(board, team).length) return -team;\n  const key = board.join('');\n  const occurrences = history.map((position, index) => ({ position, index }))\n    .filter(({ position, index }) => position.join('') === key && index % 2 === (history.length - 1) % 2);\n  if (occurrences.length < 3) return null;\n  const start = occurrences.at(-3).index;\n  const cycle = history.slice(start + 1);\n  const redChecks = cycle.filter((_, index) => (start + index) % 2 === 0).every(position => check(position, -1));\n  const blackChecks = cycle.filter((_, index) => (start + index) % 2 === 1).every(position => check(position, 1));\n  return redChecks === blackChecks ? 0 : redChecks ? -1 : 1;\n}\n\n\nconst values = { p: 100, a: 210, e: 210, h: 430, c: 460, r: 950, k: 20000, '.': 0 };\nconst value = piece => values[piece.toLowerCase()];\nfunction evaluate(board) {\n  return board.reduce((total, piece, square) => {\n    const team = side(piece);\n    const advance = team === 1 ? 9 - Math.floor(square / 9) : Math.floor(square / 9);\n    const central = 4 - Math.abs(4 - square % 9);\n    const kind = piece.toLowerCase();\n    const bonus = kind === 'p' ? advance * 9 + central * 5\n      : 'hcr'.includes(kind) ? central * 8 + Math.min(advance, 5) * 3 : 0;\n    return total + team * (value(piece) + bonus);\n  }, 0);\n}\n\nfunction ordered(board, team) {\n  return moves(board, team).sort((a, b) => value(board[b[1]]) - value(board[a[1]]));\n}\n\nfunction search(board, team, depth, alpha, beta, ply) {\n  if (depth === 0) return team * evaluate(board);\n  const legal = ordered(board, team);\n  if (!legal.length) return -30000 + ply;\n  let best = -Infinity;\n  for (const move of legal) {\n    const score = -search(play(board, move), -team, depth - 1, -beta, -alpha, ply + 1);\n    best = Math.max(best, score);\n    alpha = Math.max(alpha, best);\n    if (alpha >= beta) break;\n  }\n  return best;\n}\n\nfunction rank(board, team, depth, compare) {\n  const legal = ordered(board, team);\n  if (!legal.length) return [];\n  if (depth < 3 || compare) return legal.map(move => ({\n    move, score: -search(play(board, move), -team, depth - 1, -Infinity, Infinity, 1),\n  })).sort((a, b) => b.score - a.score);\n  let best = { move: legal[0], score: -Infinity };\n  for (const move of legal) {\n    const score = -search(play(board, move), -team, depth - 1, -Infinity, -best.score, 1);\n    if (score > best.score) best = { move, score };\n  }\n  return [best];\n}\n\n\nself.onmessage = ({ data }) => {\n  const { id, board, team, depth, compare } = data;\n  const ranked = rank(board, team, depth, compare);\n  const choice = depth === 1 && !compare\n    ? ranked[Math.floor(Math.random() * Math.min(5, ranked.length))]\n    : ranked[0];\n  self.postMessage({ id, choice, ranked: compare ? ranked : undefined });\n};\n";
+const initial = () => [
+  'rheakaehr', '.........', '.c.....c.', 'p.p.p.p.p', '.........',
+  '.........', 'P.P.P.P.P', '.C.....C.', '.........', 'RHEAKAEHR',
+].join('').split('');
+const side = piece => piece === '.' ? 0 : piece === piece.toUpperCase() ? 1 : -1;
+
+function reaches(board, from, to) {
+  const team = side(board[from]);
+  const x = from % 9, y = Math.floor(from / 9);
+  const u = to % 9, v = Math.floor(to / 9);
+  const dx = u - x, dy = v - y, a = Math.abs(dx), b = Math.abs(dy);
+  if (!team || from === to || side(board[to]) === team) return false;
+  const crossed = team === 1 ? y <= 4 : y >= 5;
+  const palace = u >= 3 && u <= 5 && (team === 1 ? v >= 7 : v <= 2);
+  switch (board[from].toLowerCase()) {
+    case 'p': return (dx === 0 && dy === -team) || (crossed && a === 1 && dy === 0);
+    case 'a': return palace && a === 1 && b === 1;
+    case 'e': return a === 2 && b === 2 && (team === 1 ? v >= 5 : v <= 4)
+      && board[from + dx / 2 + 9 * dy / 2] === '.';
+    case 'h':
+      return ((a === 2 && b === 1) || (a === 1 && b === 2))
+        && board[from + (a === 2 ? Math.sign(dx) : 9 * Math.sign(dy))] === '.';
+    case 'k':
+      if (palace && a + b === 1) return true;
+      if (dx || board[to].toLowerCase() !== 'k') return false;
+      break;
+    default:
+      if (dx && dy) return false;
+  }
+  const step = Math.sign(dx) + 9 * Math.sign(dy);
+  let blockers = 0;
+  for (let index = from + step; index !== to; index += step) {
+    if (board[index] !== '.') blockers++;
+  }
+  return blockers === (board[from].toLowerCase() === 'c' && board[to] !== '.' ? 1 : 0);
+}
+
+function play(board, [from, to]) {
+  const next = board.slice();
+  next[to] = next[from];
+  next[from] = '.';
+  return next;
+}
+
+function check(board, team) {
+  const king = board.indexOf(team === 1 ? 'K' : 'k');
+  return king < 0 || board.some((piece, from) => side(piece) === -team && reaches(board, from, king));
+}
+
+function moves(board, team, selected) {
+  const result = [];
+  const start = selected ?? 0, end = selected === undefined ? 90 : selected + 1;
+  for (let from = start; from < end; from++) {
+    if (side(board[from]) !== team) continue;
+    for (let to = 0; to < 90; to++) {
+      if (reaches(board, from, to) && !check(play(board, [from, to]), team)) result.push([from, to]);
+    }
+  }
+  return result;
+}
+
+function outcome(history, board, team) {
+  if (!moves(board, team).length) return -team;
+  const key = board.join('');
+  const occurrences = history.map((position, index) => ({ position, index }))
+    .filter(({ position, index }) => position.join('') === key && index % 2 === (history.length - 1) % 2);
+  if (occurrences.length < 3) return null;
+  const start = occurrences.at(-3).index;
+  const cycle = history.slice(start + 1);
+  const redChecks = cycle.filter((_, index) => (start + index) % 2 === 0).every(position => check(position, -1));
+  const blackChecks = cycle.filter((_, index) => (start + index) % 2 === 1).every(position => check(position, 1));
+  return redChecks === blackChecks ? 0 : redChecks ? -1 : 1;
+}
+
+const courses = [
+  {
+    title: 'Anfänger',
+    description: 'Das Brett und alle sieben Figuren kennenlernen.',
+    lessons: [
+      {
+        id: 'board', title: 'Brett und Spielziel',
+        description: 'Die Figuren ziehen von Schnittpunkt zu Schnittpunkt. In der Mitte liegt der Fluss, an den Enden der Palast. Du gewinnst, wenn dein Gegner keinen legalen Zug mehr hat.',
+        exercises: [
+          { board: 'kd10 Ke1 Ra3', goal: 'Beginne mit einem geraden Zug. Ziehe den roten Wagen zwei Schnittpunkte nach oben, von a3 nach a5.', move: 'a3 a5', why: 'Der Wagen kann mehrere freie Schnittpunkte in einer geraden Linie überqueren.' },
+        ],
+      },
+      {
+        id: 'general', title: 'General',
+        description: 'Dein General zieht einen Punkt gerade und bleibt im Palast. Zwischen den beiden Generalen muss eine Figur stehen, wenn sie auf derselben Linie stehen.',
+        exercises: [
+          { board: 'kd10 Ke1', goal: 'Ziehe den General einen Punkt nach vorn.', move: 'e1 e2', why: 'Ein Schritt gerade nach vorn bleibt innerhalb des Palasts.' },
+          { board: 'kd10 Ke1', goal: 'Finde den legalen seitlichen Zug. Auf der d-Linie steht der schwarze General.', move: 'e1 f1', why: 'Auf d1 würden sich beide Generale ohne Hindernis gegenüberstehen. Auf f1 ist der General sicher.' },
+        ],
+      },
+      {
+        id: 'advisor', title: 'Berater',
+        description: 'Der Berater zieht genau einen Punkt diagonal und bleibt im Palast.',
+        exercises: [
+          { board: 'kd10 Ke1 Af1', goal: 'Ziehe den Berater von der Ecke in die Mitte des Palasts.', move: 'f1 e2', why: 'Die Palastdiagonale führt von f1 genau einen Punkt nach e2.' },
+          { board: 'kd10 Ke1 Ae2', goal: 'Ziehe den Berater in die vordere linke Palastecke.', move: 'e2 d3', why: 'Von der Mitte aus erreicht der Berater jede freie Ecke auf einer Diagonale.' },
+        ],
+      },
+      {
+        id: 'elephant', title: 'Elefant',
+        description: 'Der Elefant zieht genau zwei Punkte diagonal. Ein Stein auf der Mitte blockiert ihn. Er bleibt auf seiner Flussseite.',
+        exercises: [
+          { board: 'kd10 Ke1 Ec1', goal: 'Ziehe den Elefanten von c1 diagonal nach rechts vorn.', move: 'c1 e3', why: 'Die Route über d2 ist frei und e3 liegt auf der roten Flussseite.' },
+          { board: 'kd10 Ke1 Ee3 Pf4', goal: 'Ziehe den Elefanten nach vorn in Richtung Fluss. Der Soldat blockiert die rechte Diagonale.', move: 'e3 c5', why: 'Über d4 ist der Weg nach c5 frei. Über f4 kommt der Elefant nicht hinweg.' },
+        ],
+      },
+      {
+        id: 'horse', title: 'Pferd',
+        description: 'Das Pferd zieht einen Punkt gerade und dann einen Punkt diagonal nach außen. Eine Figur auf dem ersten Punkt blockiert den Zug.',
+        exercises: [
+          { board: 'kd10 Ke1 Hb1', goal: 'Ziehe das Pferd zwei Reihen nach vorn und eine Linie nach rechts.', move: 'b1 c3', why: 'Das Pferd zieht über b2 nach c3. Der erste Punkt b2 ist frei.' },
+          { board: 'kd10 Ke1 He4 Pe5 pc5', goal: 'Schlage den schwarzen Soldaten. Vor dem Pferd steht ein eigener Soldat.', move: 'e4 c5', why: 'Der Schlag führt über d4. Der Soldat auf e5 blockiert nur Wege, die mit dem Schritt nach vorn beginnen.' },
+        ],
+      },
+      {
+        id: 'chariot', title: 'Wagen',
+        description: 'Der Wagen zieht beliebig weit gerade. Er kann auf keiner Seite über eine Figur springen.',
+        exercises: [
+          { board: 'kd10 Ke1 Ra2', goal: 'Ziehe den Wagen auf derselben Reihe von a2 nach h2.', move: 'a2 h2', why: 'Alle Schnittpunkte zwischen a2 und h2 sind frei.' },
+          { board: 'kd10 Ke1 Ra2 pa6 Pa7', goal: 'Schlage den schwarzen Soldaten mit dem Wagen.', move: 'a2 a6', why: 'Der Wagen stoppt auf a6 und nimmt den Soldaten vom Brett.' },
+        ],
+      },
+      {
+        id: 'cannon', title: 'Kanone',
+        description: 'Die Kanone zieht gerade. Für einen Schlag braucht sie genau eine Figur zwischen sich und dem Ziel. Diese Zwischenfigur bleibt stehen.',
+        exercises: [
+          { board: 'kd10 Ke1 Cb3', goal: 'Ziehe die Kanone gerade von b3 nach b5.', move: 'b3 b5', why: 'Bei einem Zug auf einen leeren Punkt darf die Kanone keine Figur überspringen.' },
+          { board: 'kd10 Ke1 Cb3 Pb5 pb8', goal: 'Schlage den schwarzen Soldaten auf b8.', move: 'b3 b8', why: 'Der rote Soldat auf b5 ist die einzige Zwischenfigur. Deshalb ist der Schlag legal.' },
+        ],
+      },
+      {
+        id: 'soldier', title: 'Soldat',
+        description: 'Der Soldat zieht einen Punkt gerade nach vorn. Jenseits des Flusses darf er zusätzlich einen Punkt seitwärts ziehen.',
+        exercises: [
+          { board: 'kd10 Ke1 Pc5', goal: 'Überquere mit dem Soldaten den Fluss.', move: 'c5 c6', why: 'c6 ist der erste Schnittpunkt auf der anderen Flussseite.' },
+          { board: 'kd10 Ke1 Pc6 pb6', goal: 'Schlage mit dem Soldaten seitwärts nach links.', move: 'c6 b6', why: 'Der Soldat steht bereits jenseits des Flusses und darf seitlich schlagen.' },
+        ],
+      },
+    ],
+  },
+  {
+    title: 'Fortgeschritten',
+    description: 'Schach abwehren, Fesselungen erkennen und Material gewinnen.',
+    lessons: [
+      {
+        id: 'defend', title: 'Schach abwehren',
+        description: 'Schach kannst du durch Ausweichen, Dazwischenziehen oder Schlagen der angreifenden Figur abwehren.',
+        exercises: [
+          { board: 'kf10 Ke1 re6 Ra3', goal: 'Wehre das Schach ab, indem du deinen Wagen zwischen den General und den schwarzen Wagen ziehst.', move: 'a3 e3', why: 'Dein Wagen unterbricht auf e3 die Angriffslinie.' },
+          { board: 'kf10 Ke1 re4 Rh4', goal: 'Wehre das Schach ab und gewinne dabei den schwarzen Wagen.', move: 'h4 e4', why: 'Du entfernst die angreifende Figur und behältst deinen Wagen.' },
+        ],
+      },
+      {
+        id: 'pin', title: 'Die offene Generalslinie',
+        description: 'Eine Figur zwischen den Generalen kann gefesselt sein. Sie darf die Linie nicht öffnen.',
+        exercises: [
+          { board: 'ke10 Ke1 He4 pb6 Rb4', goal: 'Das Pferd ist gefesselt. Schlage den schwarzen Soldaten mit einer anderen Figur.', move: 'b4 b6', why: 'Der Wagen kann schlagen, während das Pferd auf e4 stehen bleibt. Ein Pferdezug würde die Generale freilegen.' },
+        ],
+      },
+      {
+        id: 'winning-capture', title: 'Finde den besten Schlagzug',
+        description: 'Vergleiche, was du gewinnst und ob der Gegner sofort zurückschlagen kann.',
+        exercises: [
+          { board: 'kd10 Ke1 Cb3 Pb5 rb8 Ra4 pa6', goal: 'Rot kann zwei schwarze Figuren schlagen. Welcher Schlag gewinnt mehr Material?', move: 'b3 b8', why: 'Die Kanone gewinnt den ungedeckten Wagen. Der Schlag auf a6 gewinnt lediglich einen Soldaten.' },
+          { board: 'kd10 Ke1 Ra4 pa6 rb4 ri4', goal: 'Finde den Schlag, der Material gewinnt, ohne deinen Wagen zu verlieren.', move: 'a4 a6', why: 'Der Wagen auf i4 deckt b4. Mit a4–a6 gewinnst du stattdessen den ungedeckten Soldaten.' },
+        ],
+      },
+    ],
+  },
+  {
+    title: 'Profi',
+    description: 'Mattbilder erkennen und forcierte Zugfolgen berechnen.',
+    lessons: [
+      {
+        id: 'horse-mate', title: 'Matt in 1 · Wagen und Pferd',
+        description: 'Ein Schach ist erst Matt, wenn auch alle Fluchtpunkte und Abwehrzüge wegfallen.',
+        exercises: [
+          { board: 'kf10 Ph9 Hg7 Ri7 Kd1', goal: 'Setze Schwarz mit einem einzigen Zug matt.', move: 'i7 i10', why: 'Der Wagen kontrolliert die oberste Reihe. Das Pferd auf g7 nimmt dem General den Fluchtpunkt f9.' },
+        ],
+      },
+      {
+        id: 'cannon-mate', title: 'Matt in 1 · Wagen und Kanone',
+        description: 'Ein Wagen kann den General angreifen, während eine Kanone Fluchtpunkte kontrolliert, sobald sie eine Zwischenfigur hat.',
+        exercises: [
+          { board: 'kd10 Ph9 Ci9 Rf8 Kf1', goal: 'Finde den Mattzug. Achte darauf, welche Linie die Kanone mit dem Soldaten kontrolliert.', move: 'f8 f10', why: 'Der Wagen kontrolliert die oberste Reihe. Die Kanone deckt d9 über den roten Soldaten auf h9.' },
+        ],
+      },
+      {
+        id: 'mate-two', title: 'Matt in 2',
+        description: 'Suche zuerst ein Schach, das dem Gegner nur eine Antwort lässt. Berechne danach den Mattzug.',
+        exercises: [
+          { board: 'kd10 Hg7 Rh7 Ke1', goal: 'Finde den ersten Zug der Mattfolge. Schwarz antwortet automatisch.', move: 'g7 f9', reply: 'd10 d9', finish: 'h7 d7', why: 'Das Pferd erzwingt d9. Der Wagen setzt auf d7 matt und das Pferd nimmt dem General die Flucht nach d8.' },
+        ],
+      },
+    ],
+  },
+];
+
+
+const $ = id => document.getElementById(id);
+const glyphs = { r:'車', h:'馬', e:'象', a:'士', k:'將', c:'砲', p:'卒',
+  R:'俥', H:'傌', E:'相', A:'仕', K:'帥', C:'炮', P:'兵' };
+const names = { r:'Wagen', h:'Pferd', e:'Elefant', a:'Berater', k:'General', c:'Kanone', p:'Soldat' };
+const silhouettes = {
+  r: 'M2 10h19l-3 6H5z M5 16v3m13-3v3 M8 10V6h8v4 M17 8l4-2',
+  h: 'M5 20h15l-3-10-6-4-1-3-3 6-4 4 3 3 5-3z M9 10h.1',
+  e: 'M4 17V9q1-4 8-4t8 5v5h-3v4q0 2-3 2 M6 16v4m5-4v4 M4 11q4-4 7 0v4h-7 M16 9h.1',
+  a: 'M12 3l8 4v5q0 6-8 9-8-3-8-9V7z M12 8v7m-3-4h6',
+  k: 'M4 19h16M5 16L3 7l5 4 4-6 4 6 5-4-2 9z M12 2v1',
+  c: 'M4 9h14l3 3v2H4z M7 9V7m10 7 3 5 M12 17a3 3 0 1 0-6 0 3 3 0 0 0 6 0z',
+  p: 'M9 18l3-4m0 0 3 4m-3-4V9m-4 3 4-3 4 2m2-8 3 2-3 2v13 M14 5a2 2 0 1 0-4 0 2 2 0 0 0 4 0z',
+};
+const color = team => team === 1 ? 'Rot' : 'Schwarz';
+const field = index => 'abcdefghi'[index % 9] + (10 - Math.floor(index / 9));
+const notation = ([from, to]) => field(from) + '–' + field(to);
+const fresh = (human = 1, depth = 2) => ({ human, depth, log: [], result: null });
+let game = fresh();
+try { game = JSON.parse(localStorage.getItem('xiangqi-v1')) ?? game; } catch {}
+let history = [initial()];
+for (const move of game.log) history.push(play(history.at(-1), move));
+let cursor = game.log.length, selected, suggested, worker, serial = 0, busy = false;
+let analysis = [], analysisInfo = '';
+let theme = 'wood', pieceStyle = 'han';
+try {
+  const preferences = JSON.parse(localStorage.getItem('xiangqi-design'));
+  if (preferences) ({ theme, pieceStyle } = preferences);
+} catch {}
+
+function makePiece(piece) {
+  const chip = document.createElement('span');
+  chip.className = 'piece' + (side(piece) === 1 ? ' red' : '');
+  if (pieceStyle === 'icons') {
+    chip.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'
+      +silhouettes[piece.toLowerCase()]+'" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  } else chip.textContent = glyphs[piece];
+  return chip;
+}
+const turn = () => game.log.length % 2 ? -1 : 1;
+const save = () => {
+  try { localStorage.setItem('xiangqi-v1', JSON.stringify(game)); } catch {}
+};
+
+function makeBoard(board, onSquare) {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 800 900');
+  svg.setAttribute('class', 'lines');
+  svg.setAttribute('aria-hidden', 'true');
+  const paths = [];
+  for (let y = 0; y <= 900; y += 100) paths.push('M0 '+y+'H800');
+  for (let x = 0; x <= 800; x += 100) {
+    paths.push('M'+x+' 0V'+(x === 0 || x === 800 ? 900 : 400));
+    if (x > 0 && x < 800) paths.push('M'+x+' 500V900');
+  }
+  paths.push('M300 0L500 200M500 0L300 200M300 700L500 900M500 700L300 900');
+  svg.innerHTML = '<path stroke="currentColor" stroke-width="3" fill="none" d="'+paths.join(' ')+'"/>';
+  for (const [x, label] of [[210,'楚 河'],[590,'漢 界']]) {
+    const text = document.createElementNS(svg.namespaceURI, 'text');
+    text.setAttribute('x', x);
+    text.setAttribute('y', 470);
+    text.setAttribute('text-anchor', 'middle');
+    text.setAttribute('fill', 'currentColor');
+    text.setAttribute('font-size', '43');
+    text.textContent = label;
+    svg.append(text);
+  }
+  if (board.id === 'training-board') {
+    const labels = [
+      ...[...'abcdefghi'].map((label, index) => [index * 100, 940, label]),
+      ...Array.from({ length: 10 }, (_, index) => [-38, index * 100 + 7, 10 - index]),
+    ];
+    for (const [x, y, label] of labels) {
+      const text = document.createElementNS(svg.namespaceURI, 'text');
+      text.setAttribute('x', x);
+      text.setAttribute('y', y);
+      text.setAttribute('text-anchor', 'middle');
+      text.setAttribute('fill', 'currentColor');
+      text.setAttribute('font-size', '23');
+      text.textContent = label;
+      svg.append(text);
+    }
+  }
+  board.append(svg);
+  return Array.from({ length: 90 }, (_, index) => {
+    const button = document.createElement('button');
+    button.className = 'point';
+    button.style.left = (index % 9) * 12.5 + '%';
+    button.style.top = Math.floor(index / 9) / 9 * 100 + '%';
+    button.onclick = () => onSquare(index);
+    board.append(button);
+    return button;
+  });
+}
+
+const points = makeBoard($('board'), index => clickSquare(game.human === 1 ? index : 89 - index));
+const trainingPoints = makeBoard($('training-board'), trainSquare);
+
+function paintSquare(button, index, piece, active, targets, last, suggestion) {
+  button.replaceChildren();
+  button.setAttribute('aria-label', field(index) + (piece === '.' ? '' : ' '+color(side(piece))+' '+names[piece.toLowerCase()]));
+  button.classList.toggle('last', Boolean(last?.includes(index)));
+  button.classList.toggle('selected', active === index);
+  button.classList.toggle('legal', targets.includes(index));
+  button.classList.toggle('suggested', Boolean(suggestion?.includes(index)));
+  if (piece !== '.') button.append(makePiece(piece));
+}
+
+function render() {
+  const position = history[cursor];
+  const atEnd = cursor === game.log.length;
+  const targets = selected === undefined ? [] : moves(position, turn(), selected).map(move => move[1]);
+  const last = game.log[cursor - 1];
+  points.forEach((button, display) => {
+    const index = game.human === 1 ? display : 89 - display;
+    paintSquare(button, index, position[index], selected, targets, last, suggested);
+  });
+  $('black-role').textContent = game.human === -1 ? 'Du' : 'KI';
+  $('red-role').textContent = game.human === 1 ? 'Du' : 'KI';
+  document.querySelector('.game').style.display = 'flex';
+  document.querySelector('.game').style.flexDirection = game.human === 1 ? 'column' : 'column-reverse';
+  $('status').textContent = !atEnd ? 'Replay · Zug '+cursor+' von '+game.log.length
+    : game.result !== null ? game.result === 0 ? 'Remis' : color(game.result)+' gewinnt'
+    : busy ? 'KI denkt …' : color(turn())+' am Zug'+(check(position, turn()) ? ' · Schach' : '');
+  $('prev').disabled = cursor === 0;
+  $('next').disabled = $('live').disabled = atEnd;
+  $('resign').disabled = game.result !== null;
+  const list = $('moves');
+  list.replaceChildren(...game.log.map((move, index) => {
+    const button = document.createElement('button');
+    button.textContent = (index + 1)+'. '+notation(move);
+    button.className = index + 1 === cursor ? 'current' : '';
+    button.onclick = () => seek(index + 1);
+    return button;
+  }));
+  if (atEnd) list.scrollTop = list.scrollHeight;
+  $('analysis-panel').hidden = game.result === null || !game.log.length;
+  $('analysis-status').textContent = analysisInfo;
+  $('mistakes').replaceChildren(...analysis.filter(item => item.loss > 0)
+    .sort((a, b) => b.loss - a.loss).slice(0, 3).map(item => {
+      const button = document.createElement('button');
+      button.textContent = 'Zug '+(item.index + 1)+' · '+notation(item.actual)+' → '+notation(item.best);
+      button.onclick = () => { seek(item.index); suggested = item.best; render(); };
+      return button;
+    }));
+}
+
+function seek(index) {
+  cursor = Math.max(0, Math.min(index, game.log.length));
+  selected = suggested = undefined;
+  render();
+}
+
+function clickSquare(index) {
+  if (cursor !== game.log.length || game.result !== null || busy || turn() !== game.human) return;
+  const board = history.at(-1);
+  if (selected !== undefined && moves(board, turn(), selected).some(move => move[1] === index)) {
+    commit([selected, index]);
+  } else {
+    selected = selected !== index && side(board[index]) === game.human ? index : undefined;
+    render();
+  }
+}
+
+function commit(move) {
+  const follow = cursor === game.log.length;
+  history.push(play(history.at(-1), move));
+  game.log.push(move);
+  if (follow) cursor = game.log.length;
+  selected = suggested = undefined;
+  game.result = outcome(history, history.at(-1), turn());
+  save();
+  advance();
+}
+
+function animateOpponent(move) {
+  const [from, to] = move;
+  const board = $('board');
+  if ($('play').hidden || cursor !== game.log.length || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    commit(move);
+    return;
+  }
+  const display = square => points[game.human === 1 ? square : 89 - square];
+  const origin = display(from), destination = display(to);
+  const chip = makePiece(history.at(-1)[from]);
+  chip.classList.add('flying');
+  chip.style.left = origin.style.left;
+  chip.style.top = origin.style.top;
+  const dx = destination.offsetLeft - origin.offsetLeft;
+  const dy = destination.offsetTop - origin.offsetTop;
+  board.append(chip);
+  commit(move);
+  destination.classList.add('arriving');
+  const animation = chip.animate([
+    { transform: 'translate(-50%, -50%)' },
+    { transform: 'translate(calc(-50% + '+dx+'px), calc(-50% + '+dy+'px))' },
+  ], { duration: 260, easing: 'ease-in-out' });
+  busy = true;
+  animation.onfinish = () => {
+    chip.remove();
+    destination.classList.remove('arriving');
+    busy = false;
+    render();
+  };
+  animation.oncancel = () => {
+    chip.remove();
+    destination.classList.remove('arriving');
+  };
+}
+
+function ask(board, team, depth, compare, done) {
+  worker ??= new Worker(URL.createObjectURL(new Blob([workerCode], { type: 'text/javascript' })));
+  const id = ++serial;
+  worker.onmessage = ({ data }) => { if (data.id === serial) done(data); };
+  worker.onerror = () => {
+    busy = false;
+    analysisInfo = 'Die lokale Analyse konnte nicht gestartet werden.';
+    render();
+    if (game.result === null) $('status').textContent = 'Die lokale KI konnte nicht gestartet werden.';
+  };
+  worker.postMessage({ id, board, team, depth, compare });
+}
+
+function analyze() {
+  const indices = game.log.map((_, index) => index).filter(index => (index % 2 ? -1 : 1) === game.human);
+  function step(offset) {
+    if (offset === indices.length) {
+      analysisInfo = analysis.some(item => item.loss > 0)
+        ? 'Größte Abweichungen laut lokaler Analyse.' : 'Keine bessere Alternative in der lokalen Analyse gefunden.';
+      render();
+      return;
+    }
+    const index = indices[offset];
+    analysisInfo = 'Analysiere deine Züge · '+(offset + 1)+' / '+indices.length;
+    render();
+    ask(history[index], game.human, 2, true, ({ ranked }) => {
+      const actual = game.log[index];
+      const score = ranked.find(entry => entry.move[0] === actual[0] && entry.move[1] === actual[1])?.score;
+      if (score !== undefined) analysis.push({ index, actual, best: ranked[0].move, loss: ranked[0].score - score });
+      step(offset + 1);
+    });
+  }
+  step(0);
+}
+
+function advance() {
+  if (game.result !== null) {
+    analyze();
+  } else if (turn() !== game.human) {
+    busy = true;
+    render();
+    ask(history.at(-1), turn(), game.depth, false, ({ choice }) => {
+      busy = false;
+      if (choice) animateOpponent(choice.move);
+    });
+  } else render();
+}
+
+function stop() {
+  serial++;
+  worker?.terminate();
+  worker = undefined;
+  $('board').querySelector('.flying')?.getAnimations()[0]?.cancel();
+  busy = false;
+}
+
+$('level').value = game.depth;
+$('team').value = game.human;
+$('start').onclick = () => {
+  if (game.log.length && game.result === null && !confirm('Die laufende Partie durch eine neue ersetzen?')) return;
+  stop();
+  game = fresh(Number($('team').value), Number($('level').value));
+  history = [initial()];
+  analysis = [];
+  analysisInfo = '';
+  save();
+  seek(0);
+  advance();
+};
+$('prev').onclick = () => seek(cursor - 1);
+$('next').onclick = () => seek(cursor + 1);
+$('live').onclick = () => seek(game.log.length);
+$('resign').onclick = () => {
+  if (!confirm('Partie aufgeben?')) return;
+  stop();
+  game.result = -game.human;
+  save();
+  seek(game.log.length);
+  advance();
+};
+
+function showPage(page) {
+  for (const id of ['menu', 'play', 'training', 'settings']) $(id).hidden = id !== page;
+  $('home').hidden = page === 'menu';
+}
+document.querySelectorAll('[data-page]').forEach(button => {
+  button.onclick = () => showPage(button.dataset.page);
+});
+$('home').onclick = () => showPage('menu');
+
+function applyDesign() {
+  document.documentElement.dataset.theme = theme;
+  $('theme').value = theme;
+  $('pieces').value = pieceStyle;
+  $('piece-preview').replaceChildren(...[...'RHEAKCPrheakcp'].map(piece => {
+    const chip = makePiece(piece);
+    chip.title = color(side(piece))+' '+names[piece.toLowerCase()];
+    return chip;
+  }));
+  try { localStorage.setItem('xiangqi-design', JSON.stringify({ theme, pieceStyle })); } catch {}
+  render();
+  if (practice) renderTraining();
+}
+$('theme').onchange = () => { theme = $('theme').value; applyDesign(); };
+$('pieces').onchange = () => { pieceStyle = $('pieces').value; applyDesign(); };
+
+const square = text => (10 - Number(text.slice(1))) * 9 + 'abcdefghi'.indexOf(text[0]);
+const parseMove = text => text.split(' ').map(square);
+let practice;
+let completed = new Set();
+try { completed = new Set(JSON.parse(localStorage.getItem('xiangqi-lessons')) ?? []); } catch {}
+
+function showCourses() {
+  $('exercise').hidden = true;
+  $('course-list').hidden = false;
+  $('course-list').replaceChildren(...courses.map(course => {
+    const section = document.createElement('section');
+    section.className = 'panel';
+    const heading = document.createElement('h2');
+    heading.textContent = course.title;
+    const description = document.createElement('p');
+    description.textContent = course.description;
+    const list = document.createElement('nav');
+    list.setAttribute('aria-label', course.title);
+    course.lessons.forEach(lesson => {
+      const button = document.createElement('button');
+      button.textContent = lesson.title;
+      if (completed.has(lesson.id)) {
+        const badge = document.createElement('span');
+        badge.textContent = '✓';
+        badge.setAttribute('aria-label', 'Abgeschlossen');
+        button.append(badge);
+      }
+      button.onclick = () => startExercise(course, lesson, 0);
+      list.append(button);
+    });
+    section.append(heading, description, list);
+    return section;
+  }));
+}
+
+function startExercise(course, lesson, index) {
+  const exercise = lesson.exercises[index];
+  const board = Array(90).fill('.');
+  for (const token of exercise.board.split(' ')) board[square(token.slice(1))] = token[0];
+  practice = {
+    course, lesson, index, exercise, board, expected: parseMove(exercise.move),
+    active: undefined, last: undefined, nextGoal: exercise.goal, feedback: '', solved: false,
+  };
+  $('course-list').hidden = true;
+  $('exercise').hidden = false;
+  renderTraining();
+  $('lesson-title').focus({ preventScroll: true });
+}
+
+function renderTraining() {
+  const { course, lesson, index, board, active, last, nextGoal, feedback, solved } = practice;
+  const targets = course === courses[0] && active !== undefined
+    ? moves(board, 1, active).map(move => move[1]) : [];
+  trainingPoints.forEach((button, index) => {
+    paintSquare(button, index, board[index], active, targets, last);
+    button.setAttribute('aria-disabled', String(solved));
+  });
+  $('lesson-position').textContent = course.title+' · Aufgabe '+(index + 1)+' von '+lesson.exercises.length;
+  $('lesson-title').textContent = lesson.title;
+  $('lesson-copy').textContent = lesson.description;
+  $('lesson-goal').textContent = nextGoal;
+  $('lesson-result').textContent = feedback;
+  $('lesson-next').hidden = !solved;
+  $('lesson-next').textContent = index + 1 < lesson.exercises.length ? 'Nächste Aufgabe' : 'Zur Lektionsübersicht';
+}
+
+function trainSquare(index) {
+  if (!practice || practice.solved) return;
+  const { board, active, exercise, expected, lesson } = practice;
+  if (side(board[index]) === 1) {
+    practice.active = active === index ? undefined : index;
+    practice.feedback = '';
+  } else if (active !== undefined) {
+    if (!moves(board, 1, active).some(move => move[1] === index)) {
+      practice.feedback = 'Dieser Zug ist in der Stellung nicht legal.';
+    } else if (expected[0] !== active || expected[1] !== index) {
+      practice.feedback = 'Der Zug ist legal, löst aber die Aufgabe noch nicht.';
+    } else {
+      practice.board = play(board, expected);
+      practice.last = expected;
+      practice.active = undefined;
+      if (exercise.reply && !practice.replied) {
+        practice.last = parseMove(exercise.reply);
+        practice.board = play(practice.board, practice.last);
+        practice.expected = parseMove(exercise.finish);
+        practice.replied = true;
+        practice.nextGoal = 'Schwarz hat '+notation(practice.last)+' gespielt. Setze jetzt matt.';
+        practice.feedback = 'Richtig. Jetzt folgt der zweite rote Zug.';
+      } else {
+        practice.solved = true;
+        practice.feedback = exercise.why;
+        if (practice.index + 1 === lesson.exercises.length) {
+          completed.add(lesson.id);
+          try { localStorage.setItem('xiangqi-lessons', JSON.stringify([...completed])); } catch {}
+        }
+      }
+    }
+  } else practice.feedback = 'Wähle zuerst eine rote Figur.';
+  renderTraining();
+}
+
+$('training-back').onclick = showCourses;
+$('lesson-reset').onclick = () => startExercise(practice.course, practice.lesson, practice.index);
+$('lesson-next').onclick = () => {
+  const { course, lesson, index } = practice;
+  if (index + 1 < lesson.exercises.length) startExercise(course, lesson, index + 1);
+  else showCourses();
+};
+showCourses();
+applyDesign();
+advance();
+</script>
+</body>
+</html>
