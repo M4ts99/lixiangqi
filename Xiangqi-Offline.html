@@ -34,6 +34,14 @@ h1{font-family:Georgia,serif;font-weight:500;font-size:2.5rem;margin:0}
 .piece.flying{position:absolute;z-index:5;width:10.12%;height:auto;aspect-ratio:1;pointer-events:none}
 .piece svg{width:72%;height:72%;display:block;overflow:visible}
 #home{margin-left:auto}
+#account{margin-left:auto}
+#home:not([hidden]) + #account{margin-left:0}
+dialog{width:min(440px,92vw);background:#242a23;color:inherit;border:1px solid var(--line);border-radius:12px;padding:22px}
+dialog::backdrop{background:#111b}
+.dialog-close{float:right}
+#account-form label{display:block;margin:12px 0}
+#account-form input{display:block;width:100%;margin-top:5px;padding:9px;font:inherit;color:inherit;background:#191d19;border:1px solid var(--line);border-radius:7px}
+.account-actions{display:flex;gap:8px;flex-wrap:wrap}
 .menu{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
 button.menu-card{display:grid;gap:9px;text-align:left;min-height:120px;padding:20px}
 .menu-card strong{font-family:Georgia,serif;font-size:1.4rem;color:var(--accent)}
@@ -80,7 +88,28 @@ button:focus-visible,select:focus-visible{outline:2px solid #ffe093;outline-offs
 </head>
 <body>
   <main>
-    <header><span class="mark" aria-hidden="true">象</span><h1>Xiangqi</h1><button id="home" hidden>Hauptmenü</button></header>
+    <header><span class="mark" aria-hidden="true">象</span><h1>Xiangqi</h1><button id="home" hidden>Hauptmenü</button><button id="account" hidden>Konto</button></header>
+    <dialog id="account-dialog" aria-labelledby="account-title">
+      <form method="dialog"><button class="dialog-close" aria-label="Schließen">×</button></form>
+      <h2 id="account-title">Konto und Spielstand</h2>
+      <form id="account-form">
+        <label>E-Mail<input id="account-email" type="email" autocomplete="email" required></label>
+        <label>Passwort<input id="account-password" type="password" autocomplete="current-password" required></label>
+        <div class="account-actions">
+          <button type="submit" value="login">Anmelden</button>
+          <button type="submit" value="signup">Konto erstellen</button>
+        </div>
+      </form>
+      <div id="account-sync" hidden>
+        <p id="account-user"></p>
+        <div class="account-actions">
+          <button id="sync-start">Diesen Browser synchronisieren</button>
+          <button id="sync-load">Cloud-Spielstand laden</button>
+          <button id="sync-logout">Abmelden</button>
+        </div>
+      </div>
+      <p id="account-status" role="status"></p>
+    </dialog>
     <nav id="menu" class="menu" aria-label="Hauptmenü">
       <button class="menu-card" data-page="play"><strong>Spielen</strong><span>Eine Partie gegen die KI spielen oder fortsetzen</span></button>
       <button class="menu-card" data-page="training"><strong>Training</strong><span>Figuren und Spielregeln kennenlernen</span></button>
@@ -391,8 +420,16 @@ function makePiece(piece) {
   return chip;
 }
 const turn = () => game.log.length % 2 ? -1 : 1;
+function writeLocal(key, value) {
+  try {
+    const json = JSON.stringify(value);
+    if (localStorage.getItem(key) === json) return;
+    localStorage.setItem(key, json);
+    window.dispatchEvent(new Event('xiangqi-save'));
+  } catch {}
+}
 const save = () => {
-  try { localStorage.setItem('xiangqi-v1', JSON.stringify(game)); } catch {}
+  writeLocal('xiangqi-v1', game);
 };
 
 function makeBoard(board, onSquare) {
@@ -598,6 +635,14 @@ function analyze() {
 
 function advance() {
   if (game.result !== null) {
+    if (!game.archived && game.log.length) {
+      try {
+        const games = JSON.parse(localStorage.getItem('xiangqi-history')) ?? [];
+        game.archived = true;
+        writeLocal('xiangqi-history', [...games, game]);
+        save();
+      } catch {}
+    }
     analyze();
   } else if (turn() !== game.human) {
     busy = true;
@@ -660,7 +705,7 @@ function applyDesign() {
     chip.title = color(side(piece))+' '+names[piece.toLowerCase()];
     return chip;
   }));
-  try { localStorage.setItem('xiangqi-design', JSON.stringify({ theme, pieceStyle })); } catch {}
+  writeLocal('xiangqi-design', { theme, pieceStyle });
   render();
   if (practice) renderTraining();
 }
@@ -760,7 +805,7 @@ function trainSquare(index) {
         practice.feedback = exercise.why;
         if (practice.index + 1 === lesson.exercises.length) {
           completed.add(lesson.id);
-          try { localStorage.setItem('xiangqi-lessons', JSON.stringify([...completed])); } catch {}
+          writeLocal('xiangqi-lessons', [...completed]);
         }
       }
     }

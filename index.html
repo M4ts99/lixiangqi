@@ -19,7 +19,28 @@
 </head>
 <body>
   <main>
-    <header><span class="mark" aria-hidden="true">象</span><h1>Xiangqi</h1><button id="home" hidden>Hauptmenü</button></header>
+    <header><span class="mark" aria-hidden="true">象</span><h1>Xiangqi</h1><button id="home" hidden>Hauptmenü</button><button id="account" hidden>Konto</button></header>
+    <dialog id="account-dialog" aria-labelledby="account-title">
+      <form method="dialog"><button class="dialog-close" aria-label="Schließen">×</button></form>
+      <h2 id="account-title">Konto und Spielstand</h2>
+      <form id="account-form">
+        <label>E-Mail<input id="account-email" type="email" autocomplete="email" required></label>
+        <label>Passwort<input id="account-password" type="password" autocomplete="current-password" required></label>
+        <div class="account-actions">
+          <button type="submit" value="login">Anmelden</button>
+          <button type="submit" value="signup">Konto erstellen</button>
+        </div>
+      </form>
+      <div id="account-sync" hidden>
+        <p id="account-user"></p>
+        <div class="account-actions">
+          <button id="sync-start">Diesen Browser synchronisieren</button>
+          <button id="sync-load">Cloud-Spielstand laden</button>
+          <button id="sync-logout">Abmelden</button>
+        </div>
+      </div>
+      <p id="account-status" role="status"></p>
+    </dialog>
     <nav id="menu" class="menu" aria-label="Hauptmenü">
       <button class="menu-card" data-page="play"><strong>Spielen</strong><span>Eine Partie gegen die KI spielen oder fortsetzen</span></button>
       <button class="menu-card" data-page="training"><strong>Training</strong><span>Figuren und Spielregeln kennenlernen</span></button>
@@ -88,7 +109,10 @@
     </div>
   </main>
   <script id="web-app">
-    if (location.protocol !== 'file:') import('./app.mjs');
+    if (location.protocol !== 'file:') {
+      import('./app.mjs');
+      import('./cloud.mjs');
+    }
   </script>
 </body>
 </html>

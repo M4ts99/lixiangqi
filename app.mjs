@@ -40,8 +40,16 @@ function makePiece(piece) {
   return chip;
 }
 const turn = () => game.log.length % 2 ? -1 : 1;
+function writeLocal(key, value) {
+  try {
+    const json = JSON.stringify(value);
+    if (localStorage.getItem(key) === json) return;
+    localStorage.setItem(key, json);
+    window.dispatchEvent(new Event('xiangqi-save'));
+  } catch {}
+}
 const save = () => {
-  try { localStorage.setItem('xiangqi-v1', JSON.stringify(game)); } catch {}
+  writeLocal('xiangqi-v1', game);
 };
 
 function makeBoard(board, onSquare) {
@@ -247,6 +255,14 @@ function analyze() {
 
 function advance() {
   if (game.result !== null) {
+    if (!game.archived && game.log.length) {
+      try {
+        const games = JSON.parse(localStorage.getItem('xiangqi-history')) ?? [];
+        game.archived = true;
+        writeLocal('xiangqi-history', [...games, game]);
+        save();
+      } catch {}
+    }
     analyze();
   } else if (turn() !== game.human) {
     busy = true;
@@ -309,7 +325,7 @@ function applyDesign() {
     chip.title = color(side(piece))+' '+names[piece.toLowerCase()];
     return chip;
   }));
-  try { localStorage.setItem('xiangqi-design', JSON.stringify({ theme, pieceStyle })); } catch {}
+  writeLocal('xiangqi-design', { theme, pieceStyle });
   render();
   if (practice) renderTraining();
 }
@@ -409,7 +425,7 @@ function trainSquare(index) {
         practice.feedback = exercise.why;
         if (practice.index + 1 === lesson.exercises.length) {
           completed.add(lesson.id);
-          try { localStorage.setItem('xiangqi-lessons', JSON.stringify([...completed])); } catch {}
+          writeLocal('xiangqi-lessons', [...completed]);
         }
       }
     }

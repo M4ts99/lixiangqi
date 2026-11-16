@@ -1,6 +1,6 @@
-const cacheName = 'xiangqi-offline-v4';
+const cacheName = 'xiangqi-offline-v5';
 const assets = ['./', './index.html', './style.css', './app.mjs', './rules.mjs',
-  './engine.mjs', './worker.mjs', './lessons.mjs', './manifest.webmanifest'];
+  './engine.mjs', './worker.mjs', './lessons.mjs', './cloud.mjs', './manifest.webmanifest'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(cacheName).then(cache => cache.addAll(assets)).then(() => self.skipWaiting()));
 });
