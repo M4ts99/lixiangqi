@@ -1,4 +1,4 @@
-const cacheName = 'xiangqi-offline-v7';
+const cacheName = 'xiangqi-offline-v8';
 const assets = ['./', './index.html', './style.css', './app.mjs', './rules.mjs',
   './engine.mjs', './worker.mjs', './lessons.mjs', './cloud.mjs', './manifest.webmanifest'];
 self.addEventListener('install', event => {
